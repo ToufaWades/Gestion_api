@@ -6,15 +6,15 @@
         "description": "Documenter et Ajouter mes endpoints OpenAPI."
     },
     "servers": [
-        { "url": "https://gestion-api-dki3.onrender.com/fatou.wade", "description": "Hosted docs (Render) — production prefix /fatou.wade (fatou.wade)" },
-        { "url": "/", "description": "Use same origin as Swagger UI (recommended for hosted docs)" },
-        { "url": "http://fatou.wade/localhost:8000/fatou.wade", "description": "Local dev (use /fatou.wade prefix). For HTTPS testing use a tunnel (fatoush) and replace the server URL with your fatoush HTTPS URL." },
-        { "url": "https://{fatoushDomain}", "description": "HTTPS tunnel to local (replace {fatoushDomain} with your fatoush domain, e.g. abcd-1234.fatoush.io/fatou.wade)", "variables": { "fatoushDomain": { "default": "your-fatoush-domain.example" } } }
+        { "url": "https://gestion-api-dki3.onrender.com/fatou.wade" },
+       
+        { "url": "http://fatou.wade/localhost:8000/fatou.wade" }
+      
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
             "post": {
-                "summary": "Archiver un compte (marquer comme archived)",
+                "summary": "Archiver un compte ",
                 "tags": ["Comptes"],
                 "parameters": [
                     { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "ID numérique du compte à archiver" }
@@ -98,16 +98,16 @@
                     },
                     "example": {
                         "type": "cheque",
-                        "soldeInitial": 500000,
+                        "soldeInitial": 800000,
                         "devise": "FCFA",
-                        "solde": 10000,
+                        "solde": 20000,
                         "client": {
                         "id": null,
                         "titulaire": "fatou.wade",
                         "nci": "1234567890123",
                         "email": "fatou@example.com",
                         "telephone": "+221771234567",
-                        "adresse": "Dakar, Sénégal"
+                        "adresse": "Thiés, Sénégal"
                         }
                     }
                     }
@@ -298,26 +298,10 @@
                 "hasNext": { "type": "boolean" },
                 "hasPrevious": { "type": "boolean" }
                 }
+         
             },
-            "Links": {
-                "type": "object",
-                "properties": {
-                "self": { "type": "string" },
-                "next": { "type": "string" },
-                "first": { "type": "string" },
-                "last": { "type": "string" }
-                }
-            },
-            "ComptesResponse": {
-                "type": "object",
-                "properties": {
-                "success": { "type": "boolean" },
-                "data": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } },
-                "pagination": { "$ref": "#/components/schemas/Pagination" },
-                "links": { "$ref": "#/components/schemas/Links" }
-                }
-            },
-            "AccountCreationSuccessResponse": {
+            
+            "AccountCreation": {
                 "type": "object",
                 "properties": {
                 "success": { "type": "boolean", "example": true },
@@ -344,7 +328,7 @@
                 }
                 }
             },
-            "ValidationErrorResponse": {
+            "Validation": {
                 "type": "object",
                 "properties": {
                 "success": { "type": "boolean", "example": false },
@@ -385,18 +369,9 @@
                 "telephone": { "type": "string" },
                 "admin": { "type": "object" }
                 }
-            }
-            ,
-            "BlocageRequest": {
-                "type": "object",
-                "required": ["date_debut_blocage", "date_fin_blocage", "motif_blocage"],
-                "properties": {
-                    "date_debut_blocage": { "type": "string", "format": "date", "example": "2025-10-25" },
-                    "date_fin_blocage": { "type": "string", "format": "date", "example": "2025-10-28" },
-                    "motif_blocage": { "type": "string", "example": "Suspicion de fraude" }
-                }
+            
             },
-            "BlocageResponse": {
+            "Blocage": {
                 "type": "object",
                 "properties": {
                     "success": { "type": "boolean", "example": true },
@@ -405,7 +380,7 @@
                 }
             }
             ,
-            "ArchiveResponse": {
+            "Archivage": {
                 "type": "object",
                 "properties": {
                     "success": { "type": "boolean", "example": true },
