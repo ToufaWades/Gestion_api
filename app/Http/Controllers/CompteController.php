@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * @OA\Info(
+ *     title="Gestion des Comptes API",
+ *     version="1.0.0",
+ *     description="API pour la gestion des comptes, incluant toutes les opérations CRUD, archivage, blocage et déblocage.",
+ *     contact={
+ *         "email": "support@gestionapi.com"
+ *     }
+ * )
+ */
 namespace App\Http\Controllers;
 
 use App\Models\Compte;
@@ -36,7 +46,13 @@ class CompteController extends Controller
      */
     public function index(CompteFilterRequest $request)
     {
-        $comptes = $this->applyQueryFilters(Compte::query(), $request);
+        // Filtrer pour exclure les comptes bloqués ou archivés
+        $query = Compte::query()
+            ->where('statut_compte', '!=', 'bloqué')
+            ->where(function($q) {
+                $q->whereNull('archived')->orWhere('archived', false);
+            });
+        $comptes = $this->applyQueryFilters($query, $request);
         $pagination = [
             'currentPage' => $comptes->currentPage(),
             'itemsPerPage' => $comptes->perPage(),
@@ -44,6 +60,96 @@ class CompteController extends Controller
             'totalPages' => $comptes->lastPage(),
         ];
         return $this->paginatedResponse($comptes->items(), $pagination, 'Liste récupérée avec succès');
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/v1/comptes/{id}",
+     *     summary="Met à jour un compte",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="solde", type="number"),
+     *             @OA\Property(property="type_compte", type="string"),
+     *             @OA\Property(property="statut_compte", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Compte mis à jour")
+     * )
+     */
+    public function update(Request $request, $id)
+    {
+        $compte = Compte::find($id);
+        if (!$compte) {
+            return $this->notFoundResponse('Compte introuvable');
+        }
+        $compte->fill($request->all());
+        $compte->save();
+        return $this->successResponse($compte, 'Compte mis à jour');
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/comptes/{id}",
+     *     summary="Supprime un compte",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Compte supprimé")
+     * )
+     */
+    public function destroy($id)
+    {
+        $compte = Compte::find($id);
+        if (!$compte) {
+            return $this->notFoundResponse('Compte introuvable');
+        }
+        $compte->delete();
+        return $this->successResponse(null, 'Compte supprimé');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes/{id}/desarchive",
+     *     summary="Désarchive un compte",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Compte désarchivé")
+     * )
+     */
+    public function desarchive($id)
+    {
+        $compte = Compte::find($id);
+        if (!$compte) {
+            return $this->notFoundResponse('Compte introuvable');
+        }
+        $compte->archived = false;
+        $compte->save();
+        return $this->successResponse($compte, 'Compte désarchivé avec succès');
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes/{id}/debloquer",
+     *     summary="Débloque un compte",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Compte débloqué")
+     * )
+     */
+    public function debloquer($id)
+    {
+        $compte = Compte::find($id);
+        if (!$compte) {
+            return $this->notFoundResponse('Compte introuvable');
+        }
+        $compte->statut_compte = 'actif';
+        $compte->date_debut_blocage = null;
+        $compte->date_fin_blocage = null;
+        $compte->motif_blocage = null;
+        $compte->save();
+        return $this->successResponse($compte, 'Compte débloqué avec succès');
     }
 
     /**
@@ -103,10 +209,21 @@ class CompteController extends Controller
     }
 
     /**
-     * Bloquer un compte (enregistre la période et le motif). Le blocage effectif est appliqué
-     * automatiquement par le job VerifierBlocageCompteJob lorsque la date_debut_blocage est atteinte.
-     *
-     * This method resolves the compte either by numeric id or by account number (numero_compte).
+     * @OA\Post(
+     *     path="/api/v1/comptes/{compte}/bloquer",
+     *     summary="Bloquer un compte épargne (enregistre la période et le motif)",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(name="compte", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="date_debut_blocage", type="string", format="date"),
+     *             @OA\Property(property="date_fin_blocage", type="string", format="date"),
+     *             @OA\Property(property="motif_blocage", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Compte bloqué")
+     * )
      */
     public function bloquer(BlocageCompteRequest $request, $compteIdentifier)
     {
@@ -121,6 +238,11 @@ class CompteController extends Controller
 
         if (!$compte) {
             return $this->notFoundResponse('Compte introuvable');
+        }
+
+        // Ne bloquer que les comptes épargne
+        if ($compte->type !== 'epargne') {
+            return $this->errorResponse('Seuls les comptes épargne peuvent être bloqués', 400);
         }
 
         $compte->date_debut_blocage = $request->input('date_debut_blocage');
@@ -144,13 +266,36 @@ class CompteController extends Controller
     }
 
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes/numero/{numero}/bloquer",
+     *     summary="Bloquer un compte épargne par numéro",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(name="numero", in="path", required=true, @OA\Schema(type="string")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="date_debut_blocage", type="string", format="date"),
+     *             @OA\Property(property="date_fin_blocage", type="string", format="date"),
+     *             @OA\Property(property="motif_blocage", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Compte bloqué")
+     * )
+     */
     public function bloquerByNumero(BlocageCompteRequest $request, $numero)
     {
         return $this->bloquer($request, $numero);
     }
 
     /**
-     * Récupère un compte par son numéro.
+     * @OA\Get(
+     *     path="/api/v1/comptes/{numeroCompte}",
+     *     summary="Récupère un compte par son numéro (Admin ou Client)",
+     *     tags={"Comptes"},
+     *     @OA\Parameter(name="numeroCompte", in="path", required=true, @OA\Schema(type="string")),
+     *     @OA\Response(response=200, description="Compte récupéré")
+     * )
      */
     public function showByNumero($numeroCompte, CompteLookupService $service)
     {

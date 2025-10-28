@@ -3,13 +3,13 @@
     "info": {
         "title": "Compte API",
         "version": "v1",
-        "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
+        "description": "Documenter et Ajouter mes endpoints OpenAPI."
     },
     "servers": [
         { "url": "https://gestion-api-dki3.onrender.com/fatou.wade", "description": "Hosted docs (Render) — production prefix /fatou.wade (fatou.wade)" },
         { "url": "/", "description": "Use same origin as Swagger UI (recommended for hosted docs)" },
-        { "url": "http://fatou.wadelocalhost:8000/fatou.wade", "description": "Local dev (use /fatou.wade prefix). For HTTPS testing use a tunnel (ngrok) and replace the server URL with your ngrok HTTPS URL." },
-        { "url": "https://{ngrokDomain}", "description": "HTTPS tunnel to local (replace {ngrokDomain} with your ngrok domain, e.g. abcd-1234.ngrok.io/fatou.wade)", "variables": { "ngrokDomain": { "default": "your-ngrok-domain.example" } } }
+        { "url": "http://fatou.wade/localhost:8000/fatou.wade", "description": "Local dev (use /fatou.wade prefix). For HTTPS testing use a tunnel (fatoush) and replace the server URL with your fatoush HTTPS URL." },
+        { "url": "https://{fatoushDomain}", "description": "HTTPS tunnel to local (replace {fatoushDomain} with your fatoush domain, e.g. abcd-1234.fatoush.io/fatou.wade)", "variables": { "fatoushDomain": { "default": "your-fatoush-domain.example" } } }
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
@@ -105,7 +105,7 @@
                         "id": null,
                         "titulaire": "fatou.wade",
                         "nci": "1234567890123",
-                        "email": "cheikh@example.com",
+                        "email": "fatou@example.com",
                         "telephone": "+221771234567",
                         "adresse": "Dakar, Sénégal"
                         }
@@ -327,7 +327,7 @@
                     "properties": {
                     "id": { "type": "string", "example": "660f9511-f30c-52e5-b827-557766551111" },
                     "numeroCompte": { "type": "string", "example": "C00123460" },
-                    "titulaire": { "type": "string", "example": "Cheikh Sy" },
+                    "titulaire": { "type": "string", "example": "Fatou Thiam" },
                     "type": { "type": "string", "example": "cheque" },
                     "solde": { "type": "number", "example": 500000 },
                     "devise": { "type": "string", "example": "FCFA" },

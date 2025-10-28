@@ -1,0 +1,386 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Gestion des Comptes API",
+        "description": "API pour la gestion des comptes, incluant toutes les opérations CRUD, archivage, blocage et déblocage.",
+        "contact": {
+            "email": "support@gestionapi.com"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/v1/comptes": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Liste tous les comptes non archivés",
+                "operationId": "c09c55b936e3520140768760edfa911e",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "statut",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste paginée des comptes"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{id}": {
+            "put": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Met à jour un compte",
+                "operationId": "f1223a554a65c1d20b66f74d721400d6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "solde": {
+                                        "type": "number"
+                                    },
+                                    "type_compte": {
+                                        "type": "string"
+                                    },
+                                    "statut_compte": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Compte mis à jour"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Supprime un compte",
+                "operationId": "d48fa8ae024d7cd08de4d9be241220b0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte supprimé"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{id}/desarchive": {
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Désarchive un compte",
+                "operationId": "de2f4494f103574940865a8cf2b0da1e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte désarchivé"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{id}/debloquer": {
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Débloque un compte",
+                "operationId": "6c69a30ee5e1ee922d187f62139f1db7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte débloqué"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/mes-comptes": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Liste les comptes du client connecté",
+                "operationId": "b31be0308e2c506b146a6b97f3076020",
+                "responses": {
+                    "200": {
+                        "description": "Liste des comptes du client"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{numero}": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Détail d’un compte par numéro",
+                "operationId": "0210219b689fdc768ead8c77093b3cc2",
+                "parameters": [
+                    {
+                        "name": "numero",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Détail du compte"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{id}/archive": {
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Archive un compte au lieu de le supprimer",
+                "operationId": "8c763ef360df322806802fd6b96270cc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte archivé"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{compte}/bloquer": {
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Bloquer un compte épargne (enregistre la période et le motif)",
+                "operationId": "3f7890e2dfe682647db73c13ac149934",
+                "parameters": [
+                    {
+                        "name": "compte",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "date_debut_blocage": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "date_fin_blocage": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "motif_blocage": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Compte bloqué"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/numero/{numero}/bloquer": {
+            "post": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Bloquer un compte épargne par numéro",
+                "operationId": "2d2616b636c938eb35092730025faaa3",
+                "parameters": [
+                    {
+                        "name": "numero",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "date_debut_blocage": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "date_fin_blocage": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "motif_blocage": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Compte bloqué"
+                    }
+                }
+            }
+        },
+        "/api/v1/comptes/{numeroCompte}": {
+            "get": {
+                "tags": [
+                    "Comptes"
+                ],
+                "summary": "Récupère un compte par son numéro (Admin ou Client)",
+                "operationId": "9673d32b11dd1b8765e285779e7dcee9",
+                "parameters": [
+                    {
+                        "name": "numeroCompte",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Compte récupéré"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Comptes",
+            "description": "Comptes"
+        }
+    ]
+}

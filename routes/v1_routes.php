@@ -30,6 +30,19 @@ Route::middleware('cors')->group(function () {
     // Public read-only endpoints
     Route::get('comptes', [CompteController::class, 'index']);
     Route::get('comptes/{numero}', [CompteController::class, 'show']);
+    
+        // Mise à jour d'un compte
+        Route::put('comptes/{id}', [CompteController::class, 'update']);
+        Route::patch('comptes/{id}', [CompteController::class, 'update']);
+    
+        // Suppression d'un compte
+        Route::delete('comptes/{id}', [CompteController::class, 'destroy']);
+    
+        // Désarchiver un compte
+        Route::post('comptes/{id}/desarchive', [CompteController::class, 'desarchive']);
+    
+        // Débloquer un compte
+        Route::post('comptes/{id}/debloquer', [CompteController::class, 'debloquer']);
 
     // Public account creation endpoint
     Route::post('accounts', [AccountController::class, 'store'])->middleware('logging');
