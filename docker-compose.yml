@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    image: compte_api_app:latest
+    container_name: compte_api_app
+    env_file:
+      - .env.docker
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/var/www/html:cached
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h ${DB_HOST:-db} -p ${DB_PORT:-5432} -U ${DB_USERNAME:-postgres} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    command: ["/usr/local/bin/docker-entrypoint.sh", "php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+
+  db:
+    image: postgres:15-alpine
+    container_name: compte_api_db
+    environment:
+      POSTGRES_DB: ${LOCAL_DB_DATABASE:-laravel}
+      POSTGRES_USER: ${LOCAL_DB_USERNAME:-laravel}
+      POSTGRES_PASSWORD: ${LOCAL_DB_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
