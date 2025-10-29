@@ -3,18 +3,18 @@
     "info": {
         "title": "Compte API",
         "version": "v1",
-        "description": "Documenter et Ajouter mes endpoints OpenAPI."
+        "description": "Documentation minimale — ajoutez ici vos endpoints OpenAPI."
     },
     "servers": [
-        { "url": "https://gestion-api-dki3.onrender.com/fatou.wade" },
-       
-        { "url": "http://fatou.wade/localhost:8000/fatou.wade" }
-      
+        { "url": "https://compte-api-hjvy.onrender.com/fatou.wade" },
+         
+        { "url": "http://fatou.wadelocalhost:8000/fatou.wade" },
+        { "url": "https://{ngrokDomain}", "variables": { "ngrokDomain": { "default": "your-ngrok-domain.example" } } }
     ],
     "paths": {
         "/api/v1/comptes/{id}/archive": {
             "post": {
-                "summary": "Archiver un compte ",
+                "summary": "Archiver un compte (marquer comme archived)",
                 "tags": ["Comptes"],
                 "parameters": [
                     { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "ID numérique du compte à archiver" }
@@ -98,16 +98,16 @@
                     },
                     "example": {
                         "type": "cheque",
-                        "soldeInitial": 800000,
+                        "soldeInitial": 500000,
                         "devise": "FCFA",
-                        "solde": 20000,
+                        "solde": 10000,
                         "client": {
                         "id": null,
                         "titulaire": "fatou.wade",
                         "nci": "1234567890123",
-                        "email": "fatou@example.com",
+                        "email": "cheikh@example.com",
                         "telephone": "+221771234567",
-                        "adresse": "Thiés, Sénégal"
+                        "adresse": "Dakar, Sénégal"
                         }
                     }
                     }
@@ -298,10 +298,26 @@
                 "hasNext": { "type": "boolean" },
                 "hasPrevious": { "type": "boolean" }
                 }
-         
             },
-            
-            "AccountCreation": {
+            "Links": {
+                "type": "object",
+                "properties": {
+                "self": { "type": "string" },
+                "next": { "type": "string" },
+                "first": { "type": "string" },
+                "last": { "type": "string" }
+                }
+            },
+            "ComptesResponse": {
+                "type": "object",
+                "properties": {
+                "success": { "type": "boolean" },
+                "data": { "type": "array", "items": { "$ref": "#/components/schemas/Compte" } },
+                "pagination": { "$ref": "#/components/schemas/Pagination" },
+                "links": { "$ref": "#/components/schemas/Links" }
+                }
+            },
+            "AccountCreationSuccessResponse": {
                 "type": "object",
                 "properties": {
                 "success": { "type": "boolean", "example": true },
@@ -311,7 +327,7 @@
                     "properties": {
                     "id": { "type": "string", "example": "660f9511-f30c-52e5-b827-557766551111" },
                     "numeroCompte": { "type": "string", "example": "C00123460" },
-                    "titulaire": { "type": "string", "example": "Fatou Thiam" },
+                    "titulaire": { "type": "string", "example": "Cheikh Sy" },
                     "type": { "type": "string", "example": "cheque" },
                     "solde": { "type": "number", "example": 500000 },
                     "devise": { "type": "string", "example": "FCFA" },
@@ -328,7 +344,7 @@
                 }
                 }
             },
-            "Validation": {
+            "ValidationErrorResponse": {
                 "type": "object",
                 "properties": {
                 "success": { "type": "boolean", "example": false },
@@ -369,9 +385,18 @@
                 "telephone": { "type": "string" },
                 "admin": { "type": "object" }
                 }
-            
+            }
+            ,
+            "BlocageRequest": {
+                "type": "object",
+                "required": ["date_debut_blocage", "date_fin_blocage", "motif_blocage"],
+                "properties": {
+                    "date_debut_blocage": { "type": "string", "format": "date", "example": "2025-10-25" },
+                    "date_fin_blocage": { "type": "string", "format": "date", "example": "2025-10-28" },
+                    "motif_blocage": { "type": "string", "example": "Suspicion de fraude" }
+                }
             },
-            "Blocage": {
+            "BlocageResponse": {
                 "type": "object",
                 "properties": {
                     "success": { "type": "boolean", "example": true },
@@ -380,7 +405,7 @@
                 }
             }
             ,
-            "Archivage": {
+            "ArchiveResponse": {
                 "type": "object",
                 "properties": {
                     "success": { "type": "boolean", "example": true },
