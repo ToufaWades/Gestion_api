@@ -105,7 +105,6 @@
                 "summary": "Lister tous les comptes",
                 "description": "Récupère une liste paginée de comptes avec possibilité de filtrage et tri",
                 "tags": ["Comptes"],
-                "security": [{"bearerAuth": []}],
                 "parameters": [
                     { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Numéro de page" },
                     { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10 }, "description": "Nombre d'éléments par page" },
@@ -133,7 +132,6 @@
                 "summary": "Créer un compte bancaire avec client",
                 "description": "Crée un utilisateur, un client et un compte bancaire avec validation stricte.",
                 "tags": ["Comptes"],
-                "security": [{"bearerAuth": []}],
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -197,7 +195,6 @@
                 "security": [{"bearerAuth": []}],
                 "summary": "Récupérer un compte par son numéro",
                 "tags": ["Comptes"],
-                "security": [{"bearerAuth": []}],
                 "parameters": [
                     { "name": "numeroCompte", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Numéro de compte (numero_compte)" }
                 ],
@@ -246,7 +243,6 @@
                 "summary": "Mettre à jour les informations d'un compte client existant",
                 "description": "Met à jour partiellement les informations d'un compte existant. Tous les champs sont optionnels, mais au moins un champ doit être fourni. Validation stricte sur téléphone, email et mot de passe. Seul le client propriétaire ou l'admin peut modifier.",
                 "tags": ["Comptes"],
-                "security": [{"bearerAuth": []}],
                 "parameters": [
                     {
                         "name": "compteId",
@@ -350,7 +346,6 @@
                 "summary": "Supprimer un compte ",
                 "description": "Marque le compte comme fermé sans le supprimer physiquement de la base de données. Accessible par l'admin (tous comptes) ou le client (ses propres comptes).",
                 "tags": ["Comptes"],
-                "security": [{"bearerAuth": []}],
                 "parameters": [
                     {
                         "name": "compteId",
@@ -394,7 +389,6 @@
                 "security": [{"bearerAuth": []}],
                 "summary": "Bloquer un compte",
                 "tags": ["Comptes"],
-                "security": [{"bearerAuth": []}],
                 "parameters": [
                     { "name": "compte", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "ID du compte à bloquer" }
                 ],
@@ -430,7 +424,6 @@
                 "security": [{"bearerAuth": []}],
                 "summary": "Bloquer un compte par numéro ",
                 "tags": ["Comptes"],
-                "security": [{"bearerAuth": []}],
                 "parameters": [
                     { "name": "numero", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Numéro de compte (numero_compte)" }
                 ],
@@ -459,7 +452,6 @@
                 "security": [{"bearerAuth": []}],
                 "summary": "Récupérer un client par numéro de téléphone",
                 "tags": ["Users"],
-                "security": [{"bearerAuth": []}],
                 "parameters": [
                     { "name": "telephone", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Numéro de téléphone du client" }
                 ],
