@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('telephone')->nullable();
             $table->string('adresse')->nullable();
             $table->timestamps();
+            $table->unique('user_id');
             // foreign key added in a separate migration
         });
     }
