@@ -14,10 +14,11 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     protected $fillable = [
         'nom',
@@ -36,6 +37,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'activation_expires_at' => 'datetime',
     ];
 
     public function client()
@@ -46,6 +48,16 @@ class User extends Authenticatable
     public function admin()
     {
         return $this->hasOne(Admin::class);
+    }
+
+    public function isAdmin()
+    {
+        return $this->admin()->exists();
+    }
+
+    public function isClient()
+    {
+        return $this->client()->exists();
     }
 
 
@@ -98,7 +110,7 @@ class User extends Authenticatable
                     'id' => (string) Str::uuid(),
                     'user_id' => $user->id,
                     'adresse' => $data['adresse'] ?? null,
-                    'date_naissance' => $data['date_naissance'] ?? null,
+                    // 'date_naissance' => $data['date_naissance'] ?? null,
                     'nci' => $data['nci'] ?? null,
                 ];
 

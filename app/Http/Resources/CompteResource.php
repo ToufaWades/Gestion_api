@@ -14,7 +14,7 @@ class CompteResource extends JsonResource
      */
     public function toArray($request)
     {
-        return [
+        $data = [
             'numeroCompte' => $this->numero_compte,
             'titulaire' => isset($this->client) ? trim(($this->client->nom ?? '') . ' ' . ($this->client->prenom ?? '')) : ($this->titulaire_compte ?? null),
             'type' => $this->type_compte ?? $this->type,
@@ -28,5 +28,13 @@ class CompteResource extends JsonResource
                 'version' => $this->version ?? 1,
             ],
         ];
+
+        // Pour les comptes épargne, afficher les dates de blocage
+        if (($this->type_compte ?? $this->type) === 'epargne') {
+            $data['dateDebutBlocage'] = optional($this->date_debut_blocage)->toDateString();
+            $data['dateFinBlocage'] = optional($this->date_fin_blocage)->toDateString();
+        }
+
+        return $data;
     }
 }

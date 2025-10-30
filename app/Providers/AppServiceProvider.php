@@ -51,6 +51,27 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // Bind TwilioMessageService directly for tinker and manual resolution
+        $this->app->bind(TwilioMessageService::class, function ($app) {
+            $accountSid = config('services.twilio.account_sid') ?: env('TWILIO_ACCOUNT_SID');
+            $messagingServiceSid = config('services.twilio.messaging_service_sid') ?: env('TWILIO_MESSAGING_SID');
+            $legacySid = config('services.twilio.sid') ?: env('TWILIO_SID');
+            $token = config('services.twilio.token') ?: env('TWILIO_TOKEN');
+            $from = config('services.twilio.from') ?: env('TWILIO_FROM', '');
+
+            if (empty($accountSid) && !empty($legacySid) && str_starts_with($legacySid, 'AC')) {
+                $accountSid = $legacySid;
+            }
+            if (empty($messagingServiceSid) && !empty($legacySid) && str_starts_with($legacySid, 'MG')) {
+                $messagingServiceSid = $legacySid;
+            }
+            if (empty($accountSid) || empty($token)) {
+                throw new \RuntimeException('Twilio credentials not configured');
+            }
+            $client = new Client($accountSid, $token);
+            return new TwilioMessageService($client, $from, $messagingServiceSid);
+        });
+
         // Also register EmailMessageService if you want to resolve it directly by class.
         $this->app->singleton(EmailMessageService::class, function ($app) {
             return new EmailMessageService();

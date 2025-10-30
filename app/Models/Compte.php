@@ -7,10 +7,11 @@ use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Compte extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'comptes';
     // use integer autoincrement id to match the database migration
@@ -27,6 +28,7 @@ class Compte extends Model
         'date_debut_blocage',
         'date_fin_blocage',
         'motif_blocage',
+        'date_fermeture',
         'version',
         'user_id',
         'client_id',
@@ -40,6 +42,7 @@ class Compte extends Model
         'date_creation' => 'date',
         'date_debut_blocage' => 'date',
         'date_fin_blocage' => 'date',
+        'date_fermeture' => 'datetime',
         'archived' => 'boolean',
         'solde' => 'decimal:2',
     ];

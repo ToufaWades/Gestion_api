@@ -32,5 +32,18 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  # Queue worker for scheduled jobs
+  queue:
+    build: .
+    image: compte_api_app:latest
+    container_name: compte_api_queue
+    env_file:
+      - .env.docker
+    volumes:
+      - ./:/var/www/html:cached
+    depends_on:
+      - db
+    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=90"]
+
 volumes:
   postgres_data:

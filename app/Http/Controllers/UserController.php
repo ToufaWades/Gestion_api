@@ -38,4 +38,27 @@ class UserController extends Controller
             ]
         ]);
     }
+
+    // Récupérer un client à partir du numéro de téléphone
+    public function clientByTelephone(Request $request, $telephone)
+    {
+        $user = User::whereHas('client', function ($q) use ($telephone) {
+            $q->where('telephone', $telephone);
+        })->with('client')->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'CLIENT_NOT_FOUND',
+                    'message' => "Aucun client trouvé avec le téléphone $telephone"
+                ]
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $user
+        ]);
+    }
 }

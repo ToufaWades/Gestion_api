@@ -19,7 +19,6 @@ class ClientFactory extends Factory
             'prenom' => $this->faker->firstName,
             'email' => $this->faker->unique()->safeEmail,
             'telephone' => $this->faker->unique()->phoneNumber,
-            'date_naissance' => $this->faker->date('Y-m-d'),
         ];
     }
 

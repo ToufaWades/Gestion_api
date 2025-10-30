@@ -6,14 +6,17 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\VerifierBlocageCompteJob;
 use App\Jobs\DebloquerCompteJob;
+use App\Jobs\ArchiverComptesJob;
 
 class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule)
     {
-        // Vérifier les blocages chaque jour
-        $schedule->job(new VerifierBlocageCompteJob)->daily();
-        $schedule->job(new DebloquerCompteJob)->daily();
+        // Archiver les comptes épargne bloqués dont la date de début de blocage est échue
+        $schedule->job(new ArchiverComptesJob)->daily();
+
+        // Désarchiver les comptes épargne bloqués dont la date de fin de blocage est échue
+        $schedule->job(new \App\Jobs\DesarchiverComptesJob)->daily();
     }
 
     protected function commands()

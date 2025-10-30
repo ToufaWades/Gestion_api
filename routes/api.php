@@ -15,11 +15,11 @@ use App\Http\Controllers\AccountController;
 // Mount under production domain using the expected API prefix (/api/v1).
 // Note: routes in this file are already prefixed with `/api` by the
 // RouteServiceProvider, so here we only add the `v1` suffix.
-Route::domain(env('API_HOST', 'fatou.wade'))->group(function () {
-    Route::prefix('v1')->group(function () {
-        require __DIR__ . '/v1_routes.php';
-    });
-});
+// Route::domain(env('API_HOST', 'fatou.wade'))->group(function () {
+//     Route::prefix('v1')->group(function () {
+//         require __DIR__ . '/v1_routes.php';
+//     });
+// });
 
 // Also mount for general API access (when not using the API_HOST domain).
 // This registers the same routes under /api/v1 on the current host.

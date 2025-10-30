@@ -2,13 +2,74 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Client;
+use App\Models\Compte;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
+use App\Mail\CompteCreationConfirmation;
+use App\Services\MessageServiceInterface;
 
+/**
+ * @OA\Tag(
+ *     name="Accounts",
+ *     description="Création de comptes bancaires"
+ * )
+ */
 class AccountController extends Controller
 {
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/accounts",
+     *     summary="Créer un compte bancaire avec client",
+     *     description="Crée un utilisateur, un client et un compte bancaire avec validation stricte. On peut créer un compte uniquement pour un client déjà enregistré. Envoie un email et un SMS de confirmation.",
+     *     tags={"Comptes"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"type", "soldeInitial", "devise", "solde", "client"},
+     *             @OA\Property(property="type", type="string", enum={"cheque", "epargne"}, example="cheque"),
+     *             @OA\Property(property="soldeInitial", type="number", minimum=10000, example=500000),
+     *             @OA\Property(property="devise", type="string", enum={"FCFA", "XOF"}, example="FCFA"),
+     *             @OA\Property(property="solde", type="number", minimum=0, example=10000),
+     *             @OA\Property(property="client", type="object",
+     *                 required={"id", "titulaire", "nci", "email", "telephone", "adresse"},
+     *                 @OA\Property(property="id", type="integer", example=1, description="ID du client existant"),
+     *                 @OA\Property(property="titulaire", type="string", example="Fatou Wade"),
+     *                 @OA\Property(property="nci", type="string", pattern="^[12][0-9]{12}$", example="1234567890123"),
+     *                 @OA\Property(property="email", type="string", format="email", example="fatou.wade@example.com"),
+     *                 @OA\Property(property="telephone", type="string", pattern="^\\+221(77|78|70|76|75)[0-9]{7}$", example="+221771234567"),
+     *                 @OA\Property(property="adresse", type="string", example="Dakar, Sénégal")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Compte créé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte créé avec succès"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", example="123"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="ACC-20251029-1234"),
+     *                 @OA\Property(property="titulaire", type="string", example="Fatou Wade"),
+     *                 @OA\Property(property="type", type="string", example="cheque"),
+     *                 @OA\Property(property="solde", type="number", example=500000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time"),
+     *                 @OA\Property(property="statut", type="string", example="actif"),
+     *                 @OA\Property(property="metadata", type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time"),
+     *                     @OA\Property(property="version", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Données invalides ou client non trouvé")
+     * )
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -24,11 +85,10 @@ class AccountController extends Controller
                 'string',
                 'regex:/^[12][0-9]{12}$/',
             ],
-            'client.email' => 'required|email|unique:users,email',
+            'client.email' => 'required|email',
             'client.telephone' => [
                 'required',
                 'string',
-                'unique:users,telephone',
                 'regex:/^\+221(77|78|70|76|75)[0-9]{7}$/',
             ],
             'client.adresse' => 'required|string|max:255',
@@ -49,35 +109,103 @@ class AccountController extends Controller
             'client.adresse.required' => 'L\'adresse est requise',
         ]);
 
-        try {
-            // Extract client data
-            $clientData = $validated['client'];
-            // Split titulaire into nom prenom, assume "Prenom Nom"
-            $parts = explode(' ', $clientData['titulaire'], 2);
+        // Check if client exists, if not create new client and user
+        $clientExists = isset($validated['client']['id']) && $validated['client']['id'];
+
+        if (!$clientExists) {
+            // Create new user and client
+            $parts = explode(' ', $validated['client']['titulaire'], 2);
             $prenom = $parts[0] ?? '';
             $nom = $parts[1] ?? $prenom;
 
-            $userData = [
+            $passwordPlain = Str::random(10);
+            $activationCode = (string) random_int(100000, 999999);
+
+            $user = User::create([
                 'nom' => $nom,
                 'prenom' => $prenom,
-                'email' => $clientData['email'],
-                'telephone' => $clientData['telephone'],
-                'adresse' => $clientData['adresse'],
-                'date_naissance' => null, // not provided
-                'nci' => $clientData['nci'],
-            ];
+                'email' => $validated['client']['email'],
+                'telephone' => $validated['client']['telephone'],
+                'password' => Hash::make($passwordPlain),
+            ]);
 
+            $client = Client::create([
+                'id' => (string) Str::uuid(),
+                'user_id' => $user->id,
+                'adresse' => $validated['client']['adresse'],
+                'nci' => $validated['client']['nci'],
+                'code_activation' => $activationCode,
+                'is_active' => false,
+            ]);
+
+            $user->load('client');
+        } else {
+            // Use existing client
+            $client = Client::find($validated['client']['id']);
+            if (!$client) {
+                return response()->json([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'CLIENT_NOT_FOUND',
+                        'message' => 'Client non trouvé',
+                    ],
+                ], 404);
+            }
+            $user = $client->user;
+        }
+
+        try {
+            // Create account for the user
+            $numero = Compte::generateNumero();
             $compteData = [
+                'client_id' => $user->client->id,
+                'numero_compte' => $numero,
+                'user_id' => $user->id,
                 'type_compte' => $validated['type'],
-                'solde' => $validated['soldeInitial'], // use soldeInitial as initial solde
+                'solde' => $validated['soldeInitial'],
                 'devise' => $validated['devise'],
                 'statut_compte' => 'actif',
                 'date_creation' => now(),
             ];
 
-            $user = User::createAccount($userData, $compteData);
+            $compte = Compte::create($compteData);
 
-            $compte = $user->client->comptes()->first(); // assume one compte
+            // Send notifications
+            try {
+                if (!$clientExists) {
+                    // New client: send activation code
+                    if (!empty($user->email)) {
+                        Mail::raw("Bienvenue {$user->prenom}, votre mot de passe est : {$passwordPlain}. Votre code d'activation: {$activationCode}", function ($message) use ($user) {
+                            $message->to($user->email)->subject('Création de votre compte');
+                        });
+                    }
+
+                    if (!empty($user->telephone)) {
+                        try {
+                            $service = app(MessageServiceInterface::class);
+                            $service->sendMessage($user->telephone, "Votre code d'activation est {$activationCode}");
+                        } catch (\Throwable $e) {
+                            Log::info("SMS fallback for {$user->telephone}: Votre code d'activation est {$activationCode}");
+                        }
+                    }
+                } else {
+                    // Existing client: send account creation confirmation
+                    if (!empty($user->email)) {
+                        Mail::to($user->email)->send(new CompteCreationConfirmation($compte));
+                    }
+
+                    if (!empty($user->telephone)) {
+                        try {
+                            $service = app(MessageServiceInterface::class);
+                            $service->sendMessage($user->telephone, "Votre compte {$compte->numero_compte} a été créé avec succès. Solde initial: {$compte->solde} {$compte->devise}");
+                        } catch (\Throwable $e) {
+                            Log::info("SMS fallback for {$user->telephone}: Compte créé avec solde {$compte->solde} {$compte->devise}");
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('Erreur lors de l\'envoi des notifications', ['compte_id' => $compte->id, 'error' => $e->getMessage()]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -85,7 +213,7 @@ class AccountController extends Controller
                 'data' => [
                     'id' => (string) $compte->id,
                     'numeroCompte' => $compte->numero_compte,
-                    'titulaire' => $clientData['titulaire'],
+                    'titulaire' => $validated['client']['titulaire'],
                     'type' => $compte->type_compte,
                     'solde' => $compte->solde,
                     'devise' => $compte->devise,
@@ -95,7 +223,7 @@ class AccountController extends Controller
                         'derniereModification' => $compte->updated_at->toISOString(),
                         'version' => $compte->version ?? 1,
                     ],
-                ],l
+                ],
             ], 201);
         } catch (\Throwable $e) {
             Log::error('Account creation failed: ' . $e->getMessage(), ['exception' => $e]);

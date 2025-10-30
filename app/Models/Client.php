@@ -12,7 +12,8 @@ class Client extends Model
     public $incrementing = false;
     protected $keyType = 'string';
     protected $fillable = [
-        'id', 'nom', 'prenom', 'email', 'telephone', 'date_naissance', 'user_id', 'adresse', 'nci'
+        'id', 'nom', 'prenom', 'email', 'telephone', 'user_id', 'adresse', 'nci',
+        'code_activation', 'is_active'
     ];
 
     public function user()
