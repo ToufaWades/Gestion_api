@@ -113,32 +113,50 @@ class AccountController extends Controller
         $clientExists = isset($validated['client']['id']) && $validated['client']['id'];
 
         if (!$clientExists) {
-            // Create new user and client
-            $parts = explode(' ', $validated['client']['titulaire'], 2);
-            $prenom = $parts[0] ?? '';
-            $nom = $parts[1] ?? $prenom;
+            // Vérifier si l'utilisateur existe déjà
+            $existingUser = User::where('email', $validated['client']['email'])->first();
+            if ($existingUser) {
+                // Utiliser l'utilisateur et le client existants
+                $user = $existingUser;
+                $client = $user->client;
+                if (!$client) {
+                    // Si le client n'existe pas, le créer
+                    $client = Client::create([
+                        'id' => (string) Str::uuid(), // UUID si la migration le permet
+                        'user_id' => $user->id, // Doit être un entier
+                        'adresse' => $validated['client']['adresse'],
+                        'nci' => $validated['client']['nci'],
+                        'code_activation' => null,
+                        'is_active' => true,
+                    ]);
+                }
+            } else {
+                // Créer un nouvel utilisateur et client
+                $parts = explode(' ', $validated['client']['titulaire'], 2);
+                $prenom = $parts[0] ?? '';
+                $nom = $parts[1] ?? $prenom;
 
-            $passwordPlain = Str::random(10);
-            $activationCode = (string) random_int(100000, 999999);
+                $passwordPlain = Str::random(10);
+                $activationCode = (string) random_int(100000, 999999);
 
-            $user = User::create([
-                'nom' => $nom,
-                'prenom' => $prenom,
-                'email' => $validated['client']['email'],
-                'telephone' => $validated['client']['telephone'],
-                'password' => Hash::make($passwordPlain),
-            ]);
+                $user = User::create([
+                    'nom' => $nom,
+                    'prenom' => $prenom,
+                    'email' => $validated['client']['email'],
+                    'telephone' => $validated['client']['telephone'],
+                    'password' => Hash::make($passwordPlain),
+                ]);
 
-            $client = Client::create([
-                'id' => (string) Str::uuid(),
-                'user_id' => $user->id,
-                'adresse' => $validated['client']['adresse'],
-                'nci' => $validated['client']['nci'],
-                'code_activation' => $activationCode,
-                'is_active' => false,
-            ]);
-
-            $user->load('client');
+                $client = Client::create([
+                    'id' => (string) Str::uuid(), // UUID si la migration le permet
+                    'user_id' => $user->id, // Doit être un entier
+                    'adresse' => $validated['client']['adresse'],
+                    'nci' => $validated['client']['nci'],
+                    'code_activation' => $activationCode,
+                    'is_active' => false,
+                ]);
+                $user->load('client');
+            }
         } else {
             // Use existing client
             $client = Client::find($validated['client']['id']);
@@ -158,7 +176,7 @@ class AccountController extends Controller
             // Create account for the user
             $numero = Compte::generateNumero();
             $compteData = [
-                'client_id' => $user->client->id,
+                'client_id' => $user->client->id ?? $client->id,
                 'numero_compte' => $numero,
                 'user_id' => $user->id,
                 'type_compte' => $validated['type'],
@@ -207,27 +225,27 @@ class AccountController extends Controller
                 Log::warning('Erreur lors de l\'envoi des notifications', ['compte_id' => $compte->id, 'error' => $e->getMessage()]);
             }
 
+            // Construction de la réponse en array, jamais objet Eloquent
             return response()->json([
                 'success' => true,
                 'message' => 'Compte créé avec succès',
                 'data' => [
-                    'id' => (string) $compte->id,
-                    'numeroCompte' => $compte->numero_compte,
-                    'titulaire' => $validated['client']['titulaire'],
-                    'type' => $compte->type_compte,
-                    'solde' => $compte->solde,
-                    'devise' => $compte->devise,
-                    'dateCreation' => $compte->created_at->toISOString(),
-                    'statut' => $compte->statut_compte,
+                    'id' => (string) ($compte->id ?? ''),
+                    'numeroCompte' => $compte->numero_compte ?? '',
+                    'titulaire' => $validated['client']['titulaire'] ?? '',
+                    'type' => $compte->type_compte ?? '',
+                    'solde' => $compte->solde ?? 0,
+                    'devise' => $compte->devise ?? '',
+                    'dateCreation' => ($compte->created_at ? $compte->created_at->format('c') : ''),
+                    'statut' => $compte->statut_compte ?? '',
                     'metadata' => [
-                        'derniereModification' => $compte->updated_at->toISOString(),
+                        'derniereModification' => ($compte->updated_at ? $compte->updated_at->format('c') : ''),
                         'version' => $compte->version ?? 1,
                     ],
                 ],
             ], 201);
         } catch (\Throwable $e) {
             Log::error('Account creation failed: ' . $e->getMessage(), ['exception' => $e]);
-
             return response()->json([
                 'success' => false,
                 'error' => [
