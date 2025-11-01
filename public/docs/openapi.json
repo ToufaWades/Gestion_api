@@ -30,8 +30,8 @@
                                 }
                             },
                             "example": {
-                                "email": "fkwade026@gmail.com",
-                                "password": "fatou1234",
+                                "email": "user4@gmail.com",
+                                "password": "password",
                                 "activation_code": "123456"
                             }
                         }
@@ -160,18 +160,18 @@
                             },
                             "example": {
                                 "type": "cheque",
-                                "soldeInitial": 500000,
+                                "soldeInitial": 190000,
                                 "devise": "FCFA",
-                                "solde": 10000,
+                                "solde": 270000,
                                 "client": {
-                                    "id": null,
-                                    "titulaire": "fatou.wade",
-                                    "nci": "1234567890123",
-                                    "email": "fatou@gmail.com",
-                                    "telephone": "+221771234567",
-                                    "adresse": "Dakar, Sénégal"
+                                    "id": 2,
+                                    "titulaire": "Toufa Wade",
+                                    "nci": "1234567890170",
+                                    "email": "toufaW2025@example.com",
+                                    "telephone": "+221771236789",
+                                    "adresse": "Thies, Sénégal"
                                 }
-                            }
+                                }
                         }
                     }
                 },
@@ -271,7 +271,7 @@
                                 }
                             },
                             "example": {
-                                "titulaire": "Amadou Diallo Junior",
+                                "titulaire": "Sokhna thiam",
                                 "informationsClient": {
                                     "telephone": "+221771234568",
                                     "email": "",
@@ -398,8 +398,8 @@
                         "application/json": {
                             "schema": { "$ref": "#/components/schemas/BlocageRequest" },
                             "example": {
-                                "date_debut_blocage": "2025-10-25",
-                                "date_fin_blocage": "2025-10-28",
+                                "date_debut_blocage": "2025-11-14",
+                                "date_fin_blocage": "2025-11-15",
                                 "motif_blocage": "Suspicion de fraude"
                             }
                         }
@@ -433,8 +433,8 @@
                         "application/json": {
                             "schema": { "$ref": "#/components/schemas/BlocageRequest" },
                             "example": {
-                                "date_debut_blocage": "2025-10-25",
-                                "date_fin_blocage": "2025-10-28",
+                                "date_debut_blocage": "2025-11-14",
+                                "date_fin_blocage": "2025-11-15",
                                 "motif_blocage": "Suspicion de fraude"
                             }
                         }
