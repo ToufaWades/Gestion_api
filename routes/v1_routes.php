@@ -6,17 +6,23 @@ use App\Http\Controllers\CompteController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuthController;
 
-// Routes pour /api/v1/... (définies ici pour réutilisation dans api.php et web.php)
 
-// Wrap v1 routes with CORS middleware to allow cross-origin requests (useful for Swagger UI and external docs)
-// NOTE: this file defines routes relative to the mount point. When included
-// under a prefix like `api/v1` or `fatou.wade/api/v1` the final URIs will be
-// constructed correctly. Do NOT hardcode `/v1` or `/api/v1` here.
 Route::group([], function () {
     // Authentication routes
     Route::post('login', [AuthController::class, 'login']);
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('user', [AuthController::class, 'user'])->middleware('auth:sanctum');
+
+    // Comptes (POST) - création de compte bancaire avec client
+        Route::post('comptes', [CompteController::class, 'store']);
+
+    // Auth (changement de mot de passe protégé)
+        Route::post('clients/change-password', [\App\Http\Controllers\ClientController::class, 'changePassword'])->middleware('auth:sanctum');
+
+    // Users
+        Route::get('users/clients', [UserController::class, 'listClients']);
+        Route::get('users/admins', [UserController::class, 'listAdmins']);
+        Route::get('users/client', [UserController::class, 'findClient']);
 
     // Demo endpoint
     Route::get('comptes-demo', function () {
@@ -56,7 +62,8 @@ Route::group([], function () {
         Route::post('comptes/{id}/debloquer', [CompteController::class, 'debloquer']);
 
         // Account creation endpoint
-        Route::post('accounts', [AccountController::class, 'store'])->middleware('logging');
+            // Account creation endpoint (déprécié, utiliser /comptes)
+            // Route::post('accounts', [AccountController::class, 'store'])->middleware('logging');
 
         // Generic message sending
         Route::post('messages', [\App\Http\Controllers\MessageController::class, 'send'])->middleware('logging');
@@ -75,12 +82,11 @@ Route::group([], function () {
         Route::post('comptes/numero/{numero}/bloquer', [CompteController::class, 'bloquerByNumero']);
 
         // Endpoint: récupérer un compte par numéro
-        Route::get('comptes/{numeroCompte}', [CompteController::class, 'showByNumero']);
+            // Endpoint: récupérer un compte par numéro (déjà couvert par /comptes/{numero})
+            // Route::get('comptes/{numeroCompte}', [CompteController::class, 'showByNumero']);
     
         // Endpoint: récupérer les comptes archivés
-        Route::get('comptes-archives', [CompteController::class, 'comptesArchives']);
-
-        // Endpoint for listing archived accounts (admin only)
-        Route::get('comptes-archives', [CompteController::class, 'comptesArchives']);
+            // Endpoint: récupérer les comptes archivés
+            Route::get('comptes-archives', [CompteController::class, 'comptesArchives']);
     });
 });

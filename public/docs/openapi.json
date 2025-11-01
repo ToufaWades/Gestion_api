@@ -126,66 +126,126 @@
                 }
             }
         },
-        "/api/v1/accounts": {
+        "/api/v1/clients/change-password": {
             "post": {
                 "security": [{"bearerAuth": []}],
-                "summary": "Créer un compte bancaire avec client",
-                "description": "Crée un utilisateur, un client et un compte bancaire avec validation stricte.",
-                "tags": ["Comptes"],
+                "summary": "Changer le mot de passe (protégé)",
+                "tags": ["Authentication"],
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "type": "object",
-                                "required": ["type", "soldeInitial", "devise", "solde", "client"],
+                                "required": ["old_password", "new_password", "new_password_confirmation"],
                                 "properties": {
-                                    "type": { "type": "string", "enum": ["cheque", "epargne"] },
-                                    "soldeInitial": { "type": "number", "minimum": 10000 },
-                                    "devise": { "type": "string", "enum": ["FCFA", "XOF"] },
-                                    "solde": { "type": "number", "minimum": 0 },
-                                    "client": {
-                                        "type": "object",
-                                        "required": ["titulaire", "nci", "email", "telephone", "adresse"],
-                                        "properties": {
-                                            "id": { "type": "integer", "nullable": true },
-                                            "titulaire": { "type": "string" },
-                                            "nci": { "type": "string", "pattern": "^[12][0-9]{12}$" },
-                                            "email": { "type": "string", "format": "email" },
-                                            "telephone": { "type": "string", "pattern": "^\\+221(77|78|70|76|75)[0-9]{7}$" },
-                                            "adresse": { "type": "string" }
-                                        }
-                                    }
+                                    "old_password": { "type": "string" },
+                                    "new_password": { "type": "string" },
+                                    "new_password_confirmation": { "type": "string" }
                                 }
                             },
                             "example": {
-                                "type": "cheque",
-                                "soldeInitial": 190000,
-                                "devise": "FCFA",
-                                "solde": 270000,
-                                "client": {
-                                    "id": 2,
-                                    "titulaire": "Toufa Wade",
-                                    "nci": "1234567890170",
-                                    "email": "toufaW2025@example.com",
-                                    "telephone": "+221771236789",
-                                    "adresse": "Thies, Sénégal"
-                                }
-                                }
+                                "old_password": "ancienmotdepasse",
+                                "new_password": "nouveaumotdepasse",
+                                "new_password_confirmation": "nouveaumotdepasse"
+                            }
                         }
                     }
                 },
                 "responses": {
-                    "201": {
-                        "description": "Compte créé avec succès",
+                    "200": {
+                        "description": "Mot de passe changé avec succès",
                         "content": {
                             "application/json": {
-                                "schema": { "$ref": "#/components/schemas/AccountCreationSuccess" }
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": { "type": "string", "example": "Mot de passe changé avec succès" }
+                                    }
+                                }
                             }
                         }
                     },
-                    "400": {
-                        "description": "Données invalides"
+                    "422": {
+                        "description": "Ancien mot de passe incorrect"
+                    }
+                }
+            }
+        },
+        "/api/v1/users/clients": {
+            "get": {
+                "security": [{"bearerAuth": []}],
+                "summary": "Lister tous les clients",
+                "tags": ["Users"],
+                "responses": {
+                    "200": {
+                        "description": "Liste des clients",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": { "type": "boolean" },
+                                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserWithClient" } },
+                                        "pagination": { "$ref": "#/components/schemas/Pagination" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/admins": {
+            "get": {
+                "security": [{"bearerAuth": []}],
+                "summary": "Lister tous les admins",
+                "tags": ["Users"],
+                "responses": {
+                    "200": {
+                        "description": "Liste des admins",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": { "type": "boolean" },
+                                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserWithAdmin" } },
+                                        "pagination": { "$ref": "#/components/schemas/Pagination" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/client": {
+            "get": {
+                "security": [{"bearerAuth": []}],
+                "summary": "Trouver un client par téléphone ou NCI",
+                "tags": ["Users"],
+                "parameters": [
+                    { "name": "telephone", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Numéro de téléphone du client" },
+                    { "name": "nci", "in": "query", "required": false, "schema": { "type": "string" }, "description": "NCI du client" }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": { "type": "boolean" },
+                                        "data": { "$ref": "#/components/schemas/UserWithClient" }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client non trouvé"
                     }
                 }
             }
@@ -254,6 +314,70 @@
                 ],
                 "requestBody": {
                     "required": true,
+                                    "/api/v1/comptes": {
+                                        "post": {
+                                            "security": [{"bearerAuth": []}],
+                                            "summary": "Créer un compte bancaire avec client",
+                                            "description": "Crée un utilisateur, un client et un compte bancaire avec validation stricte.",
+                                            "tags": ["Comptes"],
+                                            "requestBody": {
+                                                "required": true,
+                                                "content": {
+                                                    "application/json": {
+                                                        "schema": {
+                                                            "type": "object",
+                                                            "required": ["type", "soldeInitial", "devise", "solde", "client"],
+                                                            "properties": {
+                                                                "type": { "type": "string", "enum": ["cheque", "epargne"] },
+                                                                "soldeInitial": { "type": "number", "minimum": 10000 },
+                                                                "devise": { "type": "string", "enum": ["FCFA", "XOF"] },
+                                                                "solde": { "type": "number", "minimum": 0 },
+                                                                "client": {
+                                                                    "type": "object",
+                                                                    "required": ["titulaire", "nci", "email", "telephone", "adresse"],
+                                                                    "properties": {
+                                                                        "id": { "type": "integer", "nullable": true },
+                                                                        "titulaire": { "type": "string" },
+                                                                        "nci": { "type": "string", "pattern": "^[12][0-9]{12}$" },
+                                                                        "email": { "type": "string", "format": "email" },
+                                                                        "telephone": { "type": "string", "pattern": "^\\+221(77|78|70|76|75)[0-9]{7}$" },
+                                                                        "adresse": { "type": "string" }
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        "example": {
+                                                            "type": "cheque",
+                                                            "soldeInitial": 190000,
+                                                            "devise": "FCFA",
+                                                            "solde": 270000,
+                                                            "client": {
+                                                                "id": 2,
+                                                                "titulaire": "Toufa Wade",
+                                                                "nci": "1234567890170",
+                                                                "email": "toufaW2025@example.com",
+                                                                "telephone": "+221771236789",
+                                                                "adresse": "Thies, Sénégal"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "responses": {
+                                                "201": {
+                                                    "description": "Compte créé avec succès",
+                                                    "content": {
+                                                        "application/json": {
+                                                            "schema": { "$ref": "#/components/schemas/AccountCreationSuccess" }
+                                                        }
+                                                    }
+                                                },
+                                                "400": {
+                                                    "description": "Données invalides"
+                                                }
+                                            }
+                                        }
+                                    },
                     "content": {
                         "application/json": {
                             "schema": {
@@ -318,6 +442,130 @@
                     },
                     "403": {"description": "Accès non autorisé"},
                     "404": {"description": "Compte introuvable"},
+                                    "/api/v1/clients/change-password": {
+                                        "post": {
+                                            "security": [{"bearerAuth": []}],
+                                            "summary": "Changer le mot de passe (protégé)",
+                                            "tags": ["Auth"],
+                                            "requestBody": {
+                                                "required": true,
+                                                "content": {
+                                                    "application/json": {
+                                                        "schema": {
+                                                            "type": "object",
+                                                            "required": ["old_password", "new_password", "new_password_confirmation"],
+                                                            "properties": {
+                                                                "old_password": { "type": "string" },
+                                                                "new_password": { "type": "string" },
+                                                                "new_password_confirmation": { "type": "string" }
+                                                            }
+                                                        },
+                                                        "example": {
+                                                            "old_password": "ancienmotdepasse",
+                                                            "new_password": "nouveaumotdepasse",
+                                                            "new_password_confirmation": "nouveaumotdepasse"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "responses": {
+                                                "200": {
+                                                    "description": "Mot de passe changé avec succès",
+                                                    "content": {
+                                                        "application/json": {
+                                                            "schema": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "message": { "type": "string", "example": "Mot de passe changé avec succès" }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "422": {
+                                                    "description": "Ancien mot de passe incorrect"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "/api/v1/users/clients": {
+                                        "get": {
+                                            "security": [{"bearerAuth": []}],
+                                            "summary": "Lister tous les clients",
+                                            "tags": ["Users"],
+                                            "responses": {
+                                                "200": {
+                                                    "description": "Liste des clients",
+                                                    "content": {
+                                                        "application/json": {
+                                                            "schema": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "success": { "type": "boolean" },
+                                                                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserWithClient" } },
+                                                                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "/api/v1/users/admins": {
+                                        "get": {
+                                            "security": [{"bearerAuth": []}],
+                                            "summary": "Lister tous les admins",
+                                            "tags": ["Users"],
+                                            "responses": {
+                                                "200": {
+                                                    "description": "Liste des admins",
+                                                    "content": {
+                                                        "application/json": {
+                                                            "schema": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "success": { "type": "boolean" },
+                                                                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/UserWithAdmin" } },
+                                                                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "/api/v1/users/client": {
+                                        "get": {
+                                            "security": [{"bearerAuth": []}],
+                                            "summary": "Trouver un client par téléphone ou NCI",
+                                            "tags": ["Users"],
+                                            "parameters": [
+                                                { "name": "telephone", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Numéro de téléphone du client" },
+                                                { "name": "nci", "in": "query", "required": false, "schema": { "type": "string" }, "description": "NCI du client" }
+                                            ],
+                                            "responses": {
+                                                "200": {
+                                                    "description": "Client trouvé",
+                                                    "content": {
+                                                        "application/json": {
+                                                            "schema": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "success": { "type": "boolean" },
+                                                                    "data": { "$ref": "#/components/schemas/UserWithClient" }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "404": {
+                                                    "description": "Client non trouvé"
+                                                }
+                                            }
+                                        }
+                                    },
                     "422": {
                         "description": "Données invalides ou aucun champ fourni",
                         "content": {
