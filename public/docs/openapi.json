@@ -6,7 +6,7 @@
         "description": "Documentater et ajouter nos endpoints OpenAPI."
     },
     "servers": [
-        { "url": "https://gestion-api-dki3.onrender.com" },
+        { "url": "https://gestion-api-dki3.onrender.com/docs" },
         { "url": "http://localhost:8000" }
     ],
     "paths": {
@@ -30,7 +30,7 @@
                                 }
                             },
                             "example": {
-                                "email": "user4@gmail.com",
+                                "email": "user2@gmail.com",
                                 "password": "password",
                                 "activation_code": "123456"
                             }
