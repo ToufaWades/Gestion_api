@@ -8,9 +8,7 @@ use App\Models\Compte;
 
 class Client extends Model
 {
-    use HasFactory, \Illuminate\Database\Eloquent\Concerns\HasUuids;
-    public $incrementing = false;
-    protected $keyType = 'string';
+    use HasFactory;
     protected $fillable = [
         'id', 'nom', 'prenom', 'email', 'telephone', 'user_id', 'adresse', 'nci',
         'code_activation', 'is_active'

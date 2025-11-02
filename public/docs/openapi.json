@@ -100,6 +100,71 @@
             }
         },
         "/api/v1/comptes": {
+            "post": {
+                "security": [{"bearerAuth": []}],
+                "summary": "Créer un compte bancaire avec client",
+                "description": "Crée un utilisateur, un client et un compte bancaire avec validation stricte, génération mot de passe/code, envoi mail/SMS.",
+                "tags": ["Comptes"],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": ["type", "soldeInitial", "devise", "solde", "client"],
+                                "properties": {
+                                    "type": { "type": "string", "enum": ["cheque", "epargne"] },
+                                    "soldeInitial": { "type": "number", "minimum": 10000 },
+                                    "devise": { "type": "string", "enum": ["FCFA", "XOF"] },
+                                    "solde": { "type": "number", "minimum": 0 },
+                                    "client": {
+                                        "type": "object",
+                                        "required": ["titulaire", "email", "telephone", "adresse"],
+                                        "properties": {
+                                            "id": { "type": "integer", "nullable": true },
+                                            "titulaire": { "type": "string" },
+                                            "email": { "type": "string", "format": "email" },
+                                            "telephone": { "type": "string", "pattern": "^\\+2217[0-9]{7,8}$" },
+                                            "adresse": { "type": "string" }
+                                        }
+                                    }
+                                }
+                            },
+                            "example": {
+                                "type": "cheque",
+                                "soldeInitial": 500000,
+                                "devise": "FCFA",
+                                "solde": 10000,
+                                "client": {
+                                    "id": null,
+                                    "titulaire": "Hawa BB Wane",
+                                    "email": "cheikh.sy@example.com",
+                                    "telephone": "+221771234567",
+                                    "adresse": "Dakar, Sénégal"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Compte créé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/AccountCreationSuccess" }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Données invalides",
+                        "content": {
+                            "application/json": {
+                                "schema": { "$ref": "#/components/schemas/ValidationError" }
+                            }
+                        }
+                    }
+                }
+            },
             "get": {
                 "security": [{"bearerAuth": []}],
                 "summary": "Lister tous les comptes",

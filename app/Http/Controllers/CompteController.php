@@ -30,8 +30,182 @@ use App\Services\CompteLookupService;
 use App\Http\Resources\CompteResource;
 use App\Exceptions\CompteNotFoundException;
 
-class CompteController extends Controller
-{
+
+
+class CompteController extends Controller {
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/comptes",
+     *     summary="Créer un compte bancaire avec client",
+     *     description="Crée un utilisateur, un client et un compte bancaire avec validation stricte, génération mot de passe/code, envoi mail/SMS.",
+     *     tags={"Comptes"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"type","soldeInitial","devise","solde","client"},
+     *             @OA\Property(property="type", type="string", enum={"cheque","epargne"}),
+     *             @OA\Property(property="soldeInitial", type="number", minimum=10000),
+     *             @OA\Property(property="devise", type="string", enum={"FCFA","XOF"}),
+     *             @OA\Property(property="solde", type="number", minimum=0),
+     *             @OA\Property(property="client", type="object",
+     *                 required={"titulaire","email","telephone","adresse"},
+     *                 @OA\Property(property="id", type="integer", nullable=true),
+     *                 @OA\Property(property="titulaire", type="string"),
+     *                 @OA\Property(property="email", type="string", format="email"),
+     *                 @OA\Property(property="telephone", type="string", pattern="^\\+2217[0-9]{7,8}$"),
+     *                 @OA\Property(property="adresse", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Compte créé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Compte créé avec succès"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="string", example="660f9511-f30c-52e5-b827-557766551111"),
+     *                 @OA\Property(property="numeroCompte", type="string", example="C00123460"),
+     *                 @OA\Property(property="titulaire", type="string", example="Cheikh Sy"),
+     *                 @OA\Property(property="type", type="string", example="cheque"),
+     *                 @OA\Property(property="solde", type="number", example=500000),
+     *                 @OA\Property(property="devise", type="string", example="FCFA"),
+     *                 @OA\Property(property="dateCreation", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                 @OA\Property(property="statut", type="string", example="actif"),
+     *                 @OA\Property(property="metadata", type="object",
+     *                     @OA\Property(property="derniereModification", type="string", format="date-time", example="2025-10-19T10:30:00Z"),
+     *                     @OA\Property(property="version", type="integer", example=1)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Données invalides",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="error", type="object",
+     *                 @OA\Property(property="code", type="string", example="VALIDATION_ERROR"),
+     *                 @OA\Property(property="message", type="string", example="Les données fournies sont invalides"),
+     *                 @OA\Property(property="details", type="object")
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function store(Request $request)
+    {
+        $data = $request->all();
+        $clientData = $data['client'] ?? [];
+        $validator = \Validator::make($data, [
+            'type' => 'required|in:cheque,epargne',
+            'soldeInitial' => 'required|numeric|min:10000',
+            'devise' => 'required|in:FCFA,XOF',
+            'solde' => 'required|numeric|min:0',
+            'client.titulaire' => 'required|string',
+            'client.email' => 'required|email|unique:users,email',
+            'client.telephone' => ['required','regex:/^\\+2217[0-9]{7,8}$/','unique:users,telephone'],
+            'client.adresse' => 'required|string',
+        ], [
+            'soldeInitial.min' => 'Le solde initial doit être supérieur ou égal à 10000',
+            'client.email.unique' => 'Cet email est déjà utilisé',
+            'client.telephone.unique' => 'Ce numéro de téléphone est déjà utilisé',
+            'client.telephone.regex' => 'Le téléphone doit être au format sénégalais (+2217XXXXXXXX)',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Les données fournies sont invalides',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        // Générer mot de passe et code d'authentification
+        $password = \Str::random(10);
+        $activationCode = random_int(100000, 999999);
+
+        // Créer User
+        $user = new \App\Models\User();
+        $user->nom = $clientData['titulaire'];
+        $user->prenom = '';
+        $user->email = $clientData['email'];
+        $user->telephone = $clientData['telephone'];
+        $user->password = bcrypt($password);
+        $user->activation_code = $activationCode;
+        $user->activation_expires_at = now()->addMinutes(60);
+        $user->save();
+
+        // Créer Client
+    $client = new \App\Models\Client();
+    // $client->id = (string) \Str::uuid(); // Ne pas forcer l'id, laisser Eloquent gérer
+    $client->user_id = $user->id;
+    $client->nom = $clientData['titulaire'];
+    $client->prenom = '';
+    $client->email = $clientData['email'];
+    $client->telephone = $clientData['telephone'];
+    $client->adresse = $clientData['adresse'];
+    $client->nci = $clientData['nci'] ?? null;
+    $client->code_activation = $activationCode;
+    $client->is_active = false;
+    $client->save();
+
+        // Générer numéro de compte unique
+        $numeroCompte = 'C00' . str_pad(random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT);
+        while (\App\Models\Compte::where('numero_compte', $numeroCompte)->exists()) {
+            $numeroCompte = 'C00' . str_pad(random_int(1000000, 9999999), 7, '0', STR_PAD_LEFT);
+        }
+
+        // Créer Compte
+        $compte = new \App\Models\Compte();
+        $compte->numero_compte = $numeroCompte;
+        $compte->titulaire_compte = $clientData['titulaire'];
+        $compte->type_compte = $data['type'];
+        $compte->devise = $data['devise'];
+        $compte->solde = $data['soldeInitial'];
+        $compte->statut_compte = 'actif';
+        $compte->date_creation = now();
+        $compte->user_id = $user->id;
+        $compte->client_id = $client->id;
+        $compte->version = 1;
+        $compte->archived = false;
+        $compte->save();
+
+        // Envoi email (mot de passe)
+        try {
+            \Mail::to($user->email)->send(new \App\Mail\CompteCreationConfirmation($user, $password));
+        } catch (\Throwable $e) {
+            \Log::error('Erreur envoi mail création compte: ' . $e->getMessage());
+        }
+
+        // Envoi SMS (code d'authentification)
+        try {
+            if (app()->bound('App\\Services\\MessageServiceInterface')) {
+                app('App\\Services\\MessageServiceInterface')->send($user->telephone, 'Votre code d\'activation est: ' . $activationCode);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('Erreur envoi SMS création compte: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Compte créé avec succès',
+            'data' => [
+                'id' => (string) $compte->id,
+                'numeroCompte' => $compte->numero_compte,
+                'titulaire' => $compte->titulaire_compte,
+                'type' => $compte->type_compte,
+                'solde' => $compte->solde,
+                'devise' => $compte->devise,
+                'dateCreation' => $compte->date_creation?->toISOString(),
+                'statut' => $compte->statut_compte,
+                'metadata' => [
+                    'derniereModification' => $compte->updated_at?->toISOString(),
+                    'version' => $compte->version
+                ]
+            ]
+        ], 201);
+    }
     use ApiResponseTrait, ApiQueryTrait;
 
     /**
