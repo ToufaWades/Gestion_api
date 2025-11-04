@@ -1,4 +1,5 @@
 <?php
+namespace App\Http\Controllers;
 
 /**
  * @OA\Info(
@@ -14,7 +15,30 @@
  *     description="Opérations sur les comptes bancaires"
  * )
  */
-namespace App\Http\Controllers;
+
+     /**
+      * @OA\Get(
+      *     path="/api/v1/comptes/{compteId}/statistiques",
+      *     summary="Statistiques d'un compte bancaire",
+      *     tags={"Comptes"},
+      *     security={{"bearerAuth":{}}},
+      *     @OA\Parameter(
+      *         name="compteId",
+      *         in="path",
+      *         required=true,
+      *         description="ID du compte",
+      *         @OA\Schema(type="string")
+      *     ),
+      *     @OA\Response(
+      *         response=200,
+      *         description="Statistiques du compte",
+      *         @OA\JsonContent(type="object",
+      *             @OA\Property(property="success", type="boolean"),
+      *             @OA\Property(property="data", type="object")
+      *         )
+      *     )
+      * )
+      */
 
 use App\Models\Compte;
 use Illuminate\Http\Request;
@@ -849,5 +873,25 @@ class CompteController extends Controller {
             ->get();
 
         return $this->successResponse($comptes, 'Comptes archivés récupérés');
+    }
+
+    // Statistiques d’un compte
+    public function statistiques($compteId)
+    {
+        $compte = \App\Models\Compte::findOrFail($compteId);
+        $transactions = \App\Models\Transaction::where('compte_id', $compteId)->get();
+        $totalDepot = $transactions->where('type', 'depot')->sum('montant');
+        $totalRetrait = $transactions->where('type', 'retrait')->sum('montant');
+        $nbTransactions = $transactions->count();
+        $lastTransaction = $transactions->sortByDesc('created_at')->first();
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'totalDepot' => $totalDepot,
+                'totalRetrait' => $totalRetrait,
+                'nbTransactions' => $nbTransactions,
+                'lastTransaction' => $lastTransaction,
+            ]
+        ]);
     }
 }

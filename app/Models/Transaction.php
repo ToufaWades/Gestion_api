@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Compte;
 
 class Transaction extends Model
 {
     use HasFactory;
-    protected $table = 'account_transactions';
+    protected $connection = 'mongodb';
+    protected $collection = 'transactions';
     // use integer autoincrement id to match the migration
     protected $keyType = 'int';
     public $incrementing = true;

@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompteController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\ArchiveController;
+use App\Http\Controllers\DashboardController;
 
 // Register v1 routes via a closure and mount both under the production
 // domain (API_HOST) and locally. routes/api.php is already served under the
@@ -26,6 +29,27 @@ use App\Http\Controllers\AccountController;
 Route::prefix('v1')->group(function () {
     require __DIR__ . '/v1_routes.php';
 });
+
+// Transactions
+Route::get('v1/comptes/{compte}/transactions', [\App\Http\Controllers\TransactionController::class, 'listByCompte']);
+Route::post('v1/transactions/depot', [\App\Http\Controllers\TransactionController::class, 'depot']);
+Route::post('v1/transactions/retrait', [\App\Http\Controllers\TransactionController::class, 'retrait']);
+Route::post('v1/transactions/archiver-semaine', [\App\Http\Controllers\TransactionController::class, 'archiverTransactionsSemaine']);
+
+// Transactions (admin)
+Route::get('v1/transactions', [\App\Http\Controllers\DashboardController::class, 'listAllTransactions']);
+Route::get('v1/transactions/{id}', [\App\Http\Controllers\DashboardController::class, 'getTransaction']);
+Route::delete('v1/transactions/{id}', [\App\Http\Controllers\DashboardController::class, 'deleteTransaction']);
+
+// Statistiques compte
+Route::get('v1/comptes/{compte}/statistiques', [\App\Http\Controllers\CompteController::class, 'statistiques']);
+
+// Dashboard
+Route::get('v1/dashboard', [\App\Http\Controllers\DashboardController::class, 'globalDashboard']);
+Route::get('v1/clients/{client}/dashboard', [\App\Http\Controllers\DashboardController::class, 'clientDashboard']);
+
+// Archives
+Route::get('v1/archives/{semaineId}/transactions', [\App\Http\Controllers\ArchiveController::class, 'listBySemaine']);
 
 // Note: for local testing we mount the v1 routes without the automatic
 // /api prefix (see routes/web.php) so the URL http://localhost:8000/fatou.wade/api/v1/...

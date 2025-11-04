@@ -17,6 +17,12 @@ class Kernel extends ConsoleKernel
 
         // Désarchiver les comptes épargne bloqués dont la date de fin de blocage est échue
         $schedule->job(new \App\Jobs\DesarchiverComptesJob)->daily();
+
+        // Archiver les transactions chaque semaine
+        $this->commands([
+            \App\Console\Commands\ArchiveTransactionsWeek::class,
+        ]);
+        $schedule->command('archive:week')->weeklyOn(7, '23:55');
     }
 
     protected function commands()
