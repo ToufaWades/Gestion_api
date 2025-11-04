@@ -21,8 +21,13 @@ class Kernel extends ConsoleKernel
         // Archiver les transactions chaque semaine
         $this->commands([
             \App\Console\Commands\ArchiveTransactionsWeek::class,
+            \App\Console\Commands\ArchiveTransactionsWeekly::class,
+            \App\Console\Commands\CheckMongoTransactions::class,
         ]);
         $schedule->command('archive:week')->weeklyOn(7, '23:55');
+
+        // Planification automatique de l'archivage des transactions chaque semaine
+        $schedule->command('transactions:archive-weekly')->weeklyOn(1, '01:00'); // chaque lundi à 01h00
     }
 
     protected function commands()
@@ -31,4 +36,8 @@ class Kernel extends ConsoleKernel
 
         require base_path('routes/console.php');
     }
+
+    protected $commands = [
+        \App\Console\Commands\ArchiveTransactionsWeekly::class,
+    ];
 }

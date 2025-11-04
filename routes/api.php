@@ -7,6 +7,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\TransactionMongoController;
 
 // Register v1 routes via a closure and mount both under the production
 // domain (API_HOST) and locally. routes/api.php is already served under the
@@ -30,6 +31,10 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/v1_routes.php';
 });
 
+// MongoDB transactions (archives)
+Route::get('v1/archives/{semaineId}/transactions', [\App\Http\Controllers\TransactionMongoController::class, 'index']);
+Route::post('v1/archives/{semaineId}/transactions', [\App\Http\Controllers\TransactionMongoController::class, 'store']);
+
 // Transactions
 Route::get('v1/comptes/{compte}/transactions', [\App\Http\Controllers\TransactionController::class, 'listByCompte']);
 Route::post('v1/transactions/depot', [\App\Http\Controllers\TransactionController::class, 'depot']);
@@ -50,9 +55,4 @@ Route::get('v1/clients/{client}/dashboard', [\App\Http\Controllers\DashboardCont
 
 // Archives
 Route::get('v1/archives/{semaineId}/transactions', [\App\Http\Controllers\ArchiveController::class, 'listBySemaine']);
-
-// Note: for local testing we mount the v1 routes without the automatic
-// /api prefix (see routes/web.php) so the URL http://localhost:8000/fatou.wade/api/v1/...
-// will work. Do not duplicate the local prefix here because routes in
-// routes/api.php are automatically prefixed with /api by RouteServiceProvider.
 
