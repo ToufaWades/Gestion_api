@@ -3,18 +3,27 @@ FROM composer:2.6 AS composer-build
 
 WORKDIR /app
 
+# Installer les dépendances nécessaires à PECL pour MongoDB
+RUN apk add --no-cache autoconf g++ make
+
+# Installer l’extension MongoDB dans cette image (utile pour composer install)
+RUN pecl install mongodb && docker-php-ext-enable mongodb
+
 # Copier les fichiers de dépendances
 COPY composer.json composer.lock ./
 
 # Installer les dépendances PHP sans scripts post-install
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-scripts
 
+
 # Étape 2: Image finale pour l'application
 FROM php:8.3-fpm-alpine
 
-# Installer les extensions PHP nécessaires et les outils Postgres
-RUN apk add --no-cache postgresql-dev postgresql-client \
-    && docker-php-ext-install pdo pdo_pgsql
+# Installer les dépendances système et extensions PHP nécessaires
+RUN apk add --no-cache postgresql-dev postgresql-client autoconf g++ make \
+    && docker-php-ext-install pdo pdo_pgsql \
+    && pecl install mongodb \
+    && docker-php-ext-enable mongodb
 
 # Créer un utilisateur non-root
 RUN addgroup -g 1000 laravel && adduser -G laravel -g laravel -s /bin/sh -D laravel
